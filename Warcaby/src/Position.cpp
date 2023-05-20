@@ -101,46 +101,15 @@ inline int Position<N>::whereMove(int row, int column, const int direction, int 
 
 	return id(row, column);
 }
-//
-//template<int N>
-//inline auto Position<N>::findLegalPositions(const bool isWhite, board* position[3])
-//{
-//	std::vector<board> allLegalPositions;
-//	board* legalPosition = new board[3];
-//	int squareFinal, squareCaptured;
-//	for (int row = 0; row < boardSize; row++)
-//	{
-//		for (int column = 0; column < boardSize; column++)
-//		{
-//			if (!position[isWhite]->test(id(row, column))) //checks is on wrong color spot 
-//				continue;
-//			for (int direction = 0; direction < 4; direction++)
-//			{
-//				legalPosition = position;
-//				squareFinal		= whereMove(row, column, direction, 2);
-//				squareCaptured	= whereMove(row, column, direction, 1);
-//				while(squareFinal >= 0) 
-//				{
-//					if (position[color(empty)].test(squareFinal) && position[!isWhite].test(squareCaptured))
-//					{
-//						singleCapture(row, column, direction, &legalPosition);
-//						allLegalPositions.push_back(&legalPosition);
-//
-//						squareFinal		= whereMove(r(squareFinal),		 c(squareFinal),	direction, 2);
-//						squareCaptured	= whereMove(r(squareCaptured),	 c(squareCaptured), direction, 2);
-//					}
-//					else
-//						squareFinal = -1;
-//				}
-//			}			
-//		}
-//	}
-//	allLegalPositions.push_back(legalPosition);
-//	return allLegalPositions;
-//}
 
 template<int N>
-inline void Position<N>::singleCapture(int row, int column, const int chosenDirection, board& position)
+inline int Position<N>::whereMove(int squareID, const int direction, int length)
+{
+	return whereMove(r(squareID), c(squareID), direction, length);
+}
+
+template<int N>
+inline void Position<N>::singleCapture(int row, int column, const int chosenDirection, board* position)
 {
 	int sign = 1;
 	bool direction = chosenDirection & 0b10;
@@ -148,9 +117,15 @@ inline void Position<N>::singleCapture(int row, int column, const int chosenDire
 		sign *= -1;
 	for (int offset = 0; offset < 3; offset++)
 	{
-		flipSquare(row + sign * offset * direction, column + sign * !direction * offset, position); //if not possible then what?
+		flipSquare(row + sign * offset * !direction, column + sign * direction * offset, position); //if not possible then what?
 	}
 
+}
+
+template<int N>
+void Position<N>::singleCapture(int squareID, const int direction, board* position)
+{
+	singleCapture(r(squareID), c(squareID), direction, position);
 }
 
 template<int N>
@@ -202,7 +177,7 @@ inline bool Position<N>::resetSquare(const int row, const int column)
 }
 
 template<int N>
-inline bool Position<N>::flipSquare(const int row, const int column, board& position)
+inline bool Position<N>::flipSquare(const int row, const int column, board* position)
 {
 	int square = id(row, column);
 	if (square == -1)
@@ -241,6 +216,35 @@ inline void Position<N>::showBoard()
 }
 
 template<int N>
+inline void Position<N>::showBoard(board* position)
+{
+	std::tuple<uint8_t, uint8_t, uint8_t> fgCursor = std::make_tuple(255, 255, 0), bgCursor = std::make_tuple(255, 0, 0);
+	std::string img;
+	//system("cls");
+	for (int row = 0; row < boardSize; row++)
+	{
+		for (int column = 0; column < boardSize; column++)
+		{
+			if (position[mask.test(id(row, column))][id(row, column)])
+				img = " * ";
+			else
+				img = "   ";
+			if (cursorRow == row && cursorColumn == column)
+			{
+				std::cout << text(img, fgCursor, bgCursor);
+				continue;
+			}
+			if (mask.test(id(row, column)))
+				std::cout << text(img, std::make_tuple(255, 255, 255), std::make_tuple(60, 60, 60));
+			else
+				std::cout << text(img, std::make_tuple(20, 20, 20), std::make_tuple(200, 200, 200));
+		}
+		std::cout << std::endl;
+	}
+}
+
+
+template<int N>
 inline int Position<N>::id(const int row, const int column)const
 {
 	if (row >= N || row < 0)
@@ -260,4 +264,53 @@ template<int N>
 inline int Position<N>::c(const int squareID)
 {
 	return squareID % N;
+}
+
+
+template<int N>
+inline auto Position<N>::findLegalPositions(const bool isWhite, board* position)
+{
+	
+	std::vector<board*> allLegalPositions;
+	int squareFinal, squareCaptured, squareCurrent;
+	for (int row = 0; row < boardSize; row++)
+	{
+		for (int column = 0; column < boardSize; column++)
+		{
+			if (!position[isWhite].test(id(row, column))) //checks is on wrong color spot 
+				continue;
+			for (int direction = 0; direction < 4; direction++)
+			{
+				board* legalPosition = new board[3];
+				std::copy(position, position + 3, legalPosition);
+				squareFinal		= whereMove(row, column, direction, 2);
+				squareCaptured	= whereMove(row, column, direction, 1);
+				squareCurrent = id(row, column);
+				while(squareFinal >= 0) 
+				{
+					if (position[color(empty)].test(squareFinal) && position[!isWhite].test(squareCaptured))
+					{
+						singleCapture(squareCurrent, direction, legalPosition);
+						std::cout << "\nLEGAL POSITION\n";
+						showBoard(legalPosition);
+						allLegalPositions.push_back(legalPosition);
+
+						squareFinal		= whereMove(squareFinal,	direction, 2);
+						squareCaptured	= whereMove(squareCaptured, direction, 2);
+						squareCurrent	= whereMove(squareCurrent,	direction, 2);
+					}
+					else
+						squareFinal = -1;
+				}
+				delete legalPosition;
+			}			
+		}
+	}
+	_getch();
+	for (auto pos : allLegalPositions)
+	{
+		std::cout << std::endl;
+		showBoard(pos);
+	}
+	return allLegalPositions;
 }

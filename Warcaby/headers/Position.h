@@ -14,15 +14,19 @@ public:
 	int selectSquare();
 	int moveCursor(int row, int column);
 	int whereMove(int row, int column, const int direction, int length);
-	void singleCapture(int row, int column, const int direction, board& position);
+	int whereMove(int squareID, const int direction, int length);
+	void singleCapture(int row, int column, const int direction, board* position);
+	void singleCapture(int squareID, const int direction, board* position);
 	bool flipSquare(const int squareID);
 	bool setSquare(const int squareID);
 	bool resetSquare(const int squareID);
 	bool flipSquare(const int row, const int column);
 	bool setSquare(const int row, const int column);
 	bool resetSquare(const int row, const int column);
-	bool flipSquare(const int row, const int column, board& position);
+	bool flipSquare(const int row, const int column, board* position);
+	auto findLegalPositions(const bool isWhite, board* position);
 	void showBoard();
+	void showBoard(board* position);
 	enum color
 	{
 		black = 0,
