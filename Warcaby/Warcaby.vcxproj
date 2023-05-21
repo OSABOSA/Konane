@@ -24,6 +24,7 @@
     <ProjectGuid>{98f08941-91f5-4960-84a1-1fd8529554bc}</ProjectGuid>
     <RootNamespace>Warcaby</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Konane</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -127,7 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Warcaby.cpp" />
+    <ClCompile Include="src\Konane.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\Includes.h" />
