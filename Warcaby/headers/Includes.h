@@ -6,3 +6,5 @@
 #include <tuple>
 #include <conio.h>
 #include <vector>
+#include "SDL.h"
+#include "SDL_image.h"
