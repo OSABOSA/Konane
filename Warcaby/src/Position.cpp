@@ -296,15 +296,13 @@ int Position<N>::whichDirection(int startRow, int startColumn, int endRow, int e
 template<int N>
 void Position<N>::resetPieceJumping()
 {
-	pieceJumpingRow = -1;
-	pieceJumpingColumn = -1;
+	setPieceJumping(-1, -1);
 }
 
 template<int N>
 void Position<N>::resetPieceLanding()
 {
-	pieceLandingRow = -1;
-	pieceLandingColumn = -1;
+	setPieceLanding(-1, -1);
 }
 
 template<int N>
