@@ -66,6 +66,88 @@ inline int Position<N>::selectSquareID()
 }
 
 template<int N>
+void Position<N>::removeFirstPiece(int isBot, board* position)
+{
+	srand(time(NULL));
+	int possibleSquares[] = {0, N * N - 1, (N * N + N) / 2, (N * N - N) / 2 - 1};
+	if (isBot)
+	{
+		flipSquare(possibleSquares[rand() % 4], position);
+	}
+	else
+	{
+		int squareID;
+		do
+		{
+			squareID = selectSquareID();
+		} while (!(squareID == possibleSquares[0] || squareID == possibleSquares[1] || squareID == possibleSquares[2] || squareID == possibleSquares[3]));
+		flipSquare(squareID, position);
+		showBoard(position);
+	}
+}
+
+template<int N>
+void Position<N>::removeSecondPiece(int isBot, board* position)
+{
+	srand(time(NULL));
+	int squareID;
+	for (int i = 0; i < N*N; i++)
+	{
+		if (position[color(empty)].test(i))
+		{
+			squareID = i;
+		}
+	}
+	int possibleSquares[4];
+	int a;
+	for (int i = 0; i < 4; i++)
+	{
+		possibleSquares[i] = whereMove(squareID, i, 1);
+	}
+
+	if (isBot)
+	{
+
+		do{
+			a = possibleSquares[rand() % 4];
+		}while (a < 0);
+		flipSquare(a, position);
+	}
+	else
+	{
+		do
+		{
+			a = selectSquareID();
+		} while (!(a == possibleSquares[0] || a == possibleSquares[1] || a == possibleSquares[2] || a == possibleSquares[3]));
+		flipSquare(a, position);
+		showBoard(position);
+	}
+}
+
+template<int N>
+void Position<N>::move(const bool isWhite, bool isBot, board* position)
+{
+	if (isBot)
+	{
+		botMove(isWhite, position);
+	}
+	else
+	{
+		playerMove(isWhite, position);
+	}
+}
+
+template<int N>
+void Position<N>::botMove(const bool isWhite, board* position)
+{
+	auto newPos = findBestMove(isWhite, 8, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), position);
+	for (int i = 0; i < 3; i++)
+	{
+		piece[i] = newPos.second[i];
+	}
+}
+
+template<int N>
 inline int Position<N>::moveCursor(int row, int column)
 {
 	int arrow = getArrowKeysMovement();
@@ -196,6 +278,7 @@ void Position<N>::playerMove(const bool isWhite, board* position)
 	} while (id(pieceJumpingRow, pieceJumpingColumn) == -1);
 	capture(isWhite, pieceJumpingRow, pieceJumpingColumn, pieceLandingRow, pieceLandingColumn, position);
 	resetPieceJumping();
+	resetPieceLanding();
 	showBoard(position);
 }
 
@@ -408,7 +491,6 @@ inline int Position<N>::c(const int squareID)
 template<int N>
 inline auto Position<N>::findLegalPositions(const bool isWhite, board* position)
 {
-	
 	std::vector<board*> allLegalPositions;
 	int squareFinal, squareCaptured, squareCurrent;
 	for (int row = 0; row < boardSize; row++)
@@ -430,7 +512,6 @@ inline auto Position<N>::findLegalPositions(const bool isWhite, board* position)
 					{
 						singleCaptureByPosition(squareCurrent, squareCaptured, squareFinal, legalPosition);
 						allLegalPositions.push_back(legalPosition); // why does it change piece
-
 						squareFinal		= whereMove(squareFinal,	direction, 2);
 						squareCaptured	= whereMove(squareCaptured, direction, 2);
 						squareCurrent	= whereMove(squareCurrent,	direction, 2);
@@ -438,12 +519,92 @@ inline auto Position<N>::findLegalPositions(const bool isWhite, board* position)
 					else
 						squareFinal = -1;
 				}
-				delete[] legalPosition;
 			}			
 		}
 	}
+
 	return allLegalPositions;
 }
+
+
+template<int N>
+auto Position<N>::findBestMove(int isWhite, int depth, int alpha, int beta, board* position)
+{
+	auto vecPos = findLegalPositions(isWhite, position);
+	int noOfPositions = vecPos.size();
+	if (vecPos.empty())
+	{
+		std::pair<int, board*> pair;
+		if (!isWhite)
+		{
+			pair.first = std::numeric_limits<int>::min();
+		}
+		else
+		{
+			pair.first = std::numeric_limits<int>::max();
+		}
+		pair.second = position;
+		return pair;
+	}
+	if (!depth)
+	{
+		return staticPositionEvaluation(isWhite, position);
+	}
+	if (!isWhite)
+	{
+		std::pair<int, board*> maxEval;
+		maxEval.first = std::numeric_limits<int>::min();
+		maxEval.second = position;
+		for (size_t i = 0; i < noOfPositions; i++)
+		{
+			std::pair<int, board*> eval;
+			eval = findBestMove(true, depth - 1, alpha, beta, vecPos.at(i));
+			eval.second = vecPos.at(i);
+			if (eval.first > alpha)
+			{
+				alpha = eval.first;
+				maxEval = eval;
+			}
+			if (beta <= alpha)
+			{
+				break;
+			}
+		}
+		return maxEval;
+	}
+	else
+	{
+		std::pair<int, board*> minEval;
+		minEval.first = std::numeric_limits<int>::max();
+		minEval.second = position;
+		for (size_t i = 0; i < noOfPositions; i++)
+		{
+			std::pair<int, board*> eval;
+			eval = findBestMove(false, depth - 1, alpha, beta, vecPos.at(i));
+			eval.second = vecPos.at(i);
+			if (eval.first < beta)
+			{
+				beta = eval.first;
+				minEval = eval;
+			}
+			if (beta <= alpha)
+			{
+				break;
+			}
+		}
+		return minEval;
+	}
+}
+
+template<int N>
+auto Position<N>::staticPositionEvaluation(int isWhite, board* position)
+{
+	std::pair<int, board*> ret;
+	ret.first = findLegalPositions(isWhite, position).size() - findLegalPositions(!isWhite, position).size();
+	ret.second = position;
+	return ret;
+}
+
 
 template<int N>
 bool Position<N>::noMoves(const bool isWhite, board* position)

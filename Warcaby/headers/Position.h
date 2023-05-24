@@ -12,6 +12,12 @@ public:
 	board mask;
 	int cursorRow, cursorColumn, pieceJumpingRow, pieceJumpingColumn, pieceLandingRow, pieceLandingColumn;
 	int selectSquareID();
+	void removeFirstPiece(int isBot, board* position);
+	void removeSecondPiece(int isBot, board* position);
+	void move(const bool isWhite, bool isBot, board* position);
+	void botMove(const bool isWhite, board* position);
+	auto staticPositionEvaluation(int isWhite, board* position);
+	auto findBestMove(int isWhite, int depth, int alpha, int beta, board* position);
 	int moveCursor(int row, int column);
 	int whereMove(int row, int column, const int direction, int length);
 	int whereMove(int squareID, const int direction, int length);
